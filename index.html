@@ -4,41 +4,147 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Showcase</title>
-    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Project showcase featuring the latest projects with interactive elements and modern web technologies.">
+    <meta property="og:title" content="Project Showcase">
+    <meta property="og:description" content="Explore our latest projects with interactive and dynamic features.">
+    <meta property="og:image" content="path/to/image.png">
+    <meta property="og:url" content="https://your-website.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Project Showcase">
+    <meta name="twitter:description" content="Explore our latest projects with interactive and dynamic features.">
+    <meta name="twitter:image" content="path/to/image.png">
+    <meta name="twitter:url" content="https://your-website.com">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            text-align: center;
+            overflow-x: hidden; /* Prevent horizontal scrolling */
+        }
+        body.no-scroll {
+            overflow: hidden; /* Prevent scrolling when project is active */
         }
         header {
-            background-color: #333;
-            color: #fff;
-            padding: 1rem 0;
-            text-align: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 2rem 0;
+            position: relative;
+            overflow: hidden;
         }
         header img {
-            width: 150px;
+            width: 100px;
             height: auto;
-            display: block;
-            margin: 0 auto;
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            animation: fadeIn 2s ease-in-out;
         }
         .container {
-            width: 80%;
+            width: 90%;
+            max-width: 1200px;
             margin: 2rem auto;
-            background: #fff;
+            background: rgba(0, 0, 0, 0.7);
             padding: 2rem;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .project-slider {
+            display: flex;
+            overflow: auto; /* Manual scrolling */
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 20px;
+            scroll-behavior: smooth; /* Smooth scrolling */
         }
         .project {
-            margin-bottom: 2rem;
+            flex: 0 0 auto;
+            width: 400px; /* Centered and larger width */
+            height: 750px;
+            margin-right: 20px;
+            background-color: rgba(0, 0, 0, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease-in-out;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center images */
+            justify-content: center;
         }
-        .project h2 {
-            margin-top: 0;
+        .project:last-child {
+            margin-right: 0;
         }
-        .project p {
-            line-height: 1.6;
+        .project.active {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            max-width: 500px; /* Max width for enlarged view */
+            max-height: 600px; /* Max height for enlarged view */
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: auto;
+            transition: opacity 0.5s ease-in-out; /* Fade-in effect */
+        }
+        .project.active .project-details {
+            max-width: 80%; /* Adjusted for better fit */
+            max-height: 80%; /* Adjusted for better fit */
+            overflow: auto;
+        }
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+        .social-icons {
+            margin-top: 2rem;
+        }
+        .social-icons a {
+            color: #fdbb2d;
+            margin: 0 10px;
+            font-size: 1.5rem;
+            transition: color 0.3s ease-in-out;
+        }
+        .social-icons a:hover {
+            color: #1a2a6c;
+        }
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
         }
     </style>
 </head>
@@ -48,19 +154,79 @@
     <h1>Project Showcase</h1>
 </header>
 <div class="container">
-    <section class="project">
-        <h2>Project 1: Project Name</h2>
-        <p>Description of the project. What it does, how it was built, technologies used, etc.</p>
-    </section>
-    <section class="project">
-        <h2>Project 2: Project Name</h2>
-        <p>Description of the project. What it does, how it was built, technologies used, etc.</p>
-    </section>
-    <section class="project">
-        <h2>Project 3: Project Name</h2>
-        <p>Description of the project. What it does, how it was built, technologies used, etc.</p>
-    </section>
-    <!-- Add more projects as needed -->
+    <div class="project-slider">
+        <div class="project">
+            <img src="https://picsum.photos/200/300?random=1" alt="Project 1 Icon">
+            <h2>Project 1: Awesome App</h2>
+            <p>This app does amazing things. It was built using modern web technologies and offers an incredible user experience.</p>
+            <canvas id="seleniumChart1" width="300" height="150"></canvas>
+        </div>
+        <div class="project">
+            <img src="https://picsum.photos/200/300?random=2" alt="Project 2 Icon">
+            <h2>Project 2: Innovative Solution</h2>
+            <p>An innovative solution to everyday problems, built with a focus on performance and scalability.</p>
+            <canvas id="seleniumChart2" width="300" height="150"></canvas>
+        </div>
+        <div class="project">
+            <img src="https://picsum.photos/200/300?random=3" alt="Project 3 Icon">
+            <h2>Project 3: Creative Tool</h2>
+            <p>A creative tool that helps users achieve their goals efficiently. It integrates seamlessly with various platforms.</p>
+            <canvas id="seleniumChart3" width="300" height="150"></canvas>
+        </div>
+        <div class="project">
+            <img src="https://picsum.photos/200/300?random=4" alt="Project 4 Icon">
+            <h2>Project 4: Data Analytics Dashboard</h2>
+            <p>A comprehensive dashboard for analyzing business data. Provides insights through interactive visualizations.</p>
+            <canvas id="seleniumChart4" width="300" height="150"></canvas>
+        </div>
+        <div class="project">
+            <img src="https://picsum.photos/200/300?random=5" alt="Project 5 Icon">
+            <h2>Project 5: E-commerce Platform</h2>
+            <p>An e-commerce platform that simplifies online shopping with intuitive design and robust backend.</p>
+            <canvas id="seleniumChart5" width="300" height="150"></canvas>
+        </div>
+        <div class="project">
+            <img src="https://picsum.photos/200/300?random=6" alt="Project 6 Icon">
+            <h2>Project 6: Mobile App Redesign</h2>
+            <p>A redesign project aimed at improving the user interface and user experience of a popular mobile app.</p>
+            <canvas id="seleniumChart6" width="300" height="150"></canvas>
+        </div>
+    </div>
 </div>
+<div class="social-icons">
+    <a href="https://github.com/iAxvleda/iaxvleda.github.io" target="_blank">
+        <i class="fab fa-github"></i>
+    </a>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.css">
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    const projects = document.querySelector('.project-slider');
+    const projectDetails = document.querySelectorAll('.project');
+    const closeProject = document.querySelectorAll('.close-btn');
+
+    projects.addEventListener('click', e => {
+        const project = e.target.closest('.project');
+        if (!project) return;
+
+        // Toggle active class for selected project
+        project.classList.toggle('active');
+        document.body.classList.toggle('no-scroll');
+    });
+
+    // Close project details when close button is clicked
+    closeProject.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const activeProject = document.querySelector('.project.active');
+            if (activeProject) {
+                activeProject.classList.remove('active');
+                document.body.classList.remove('no-scroll');
+            }
+        });
+    });
+</script>
 </body>
 </html>
