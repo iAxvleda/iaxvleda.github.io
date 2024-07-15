@@ -23,6 +23,6 @@ public class WebApplication {
 
 	@GetMapping("/index")
 	public String index(Model model) {
-		return "index";
+		return "html";
 	}
 }
