@@ -2,145 +2,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title><!DOCTYPE html>
-        <html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
-        <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Iweri - Software Testing Engineer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Showcase</title>
+    <link rel="stylesheet" href="styles.css">
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #121212;
-            color: #d3d3d3;
+            background-color: #f4f4f4;
         }
         header {
-            background-color: #1a1a1a;
-            padding: 20px;
+            background-color: #333;
+            color: #fff;
+            padding: 1rem 0;
             text-align: center;
         }
         header img {
-            height: 80px;
-        }
-        nav {
-            margin-top: 10px;
-        }
-        nav a {
-            margin: 0 15px;
-            color: #d3d3d3;
-            text-decoration: none;
-            font-size: 18px;
-        }
-        section {
-            padding: 50px 20px;
-            max-width: 800px;
+            width: 150px;
+            height: auto;
+            display: block;
             margin: 0 auto;
         }
-        h1, h2 {
-            color: #e0e0e0;
+        .container {
+            width: 80%;
+            margin: 2rem auto;
+            background: #fff;
+            padding: 2rem;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        ul {
-            list-style-type: disc;
-            margin: 20px 0;
-            padding-left: 20px;
+        .project {
+            margin-bottom: 2rem;
         }
-        .contact-form input, .contact-form textarea {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 5px;
-            background-color: #1a1a1a;
-            color: #d3d3d3;
+        .project h2 {
+            margin-top: 0;
         }
-        .contact-form button {
-            background-color: #333;
-            color: #d3d3d3;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        footer {
-            text-align: center;
-            padding: 20px;
-            background-color: #1a1a1a;
-        }
-        footer a {
-            color: #d3d3d3;
-            text-decoration: none;
+        .project p {
+            line-height: 1.6;
         }
     </style>
 </head>
 <body>
 <header>
-    <img alt="axvlediani alt_text" src="achwlediani_icon.png" th:alt="${name} + ' Logo'" width="80" height="80">
-    <nav>
-        <a href="#about">About Me</a>
-        <a href="#services">Services</a>
-        <a href="#knowledge">Knowledge</a>
-        <a href="#value">Value</a>
-        <a href="#contact">Contact</a>
-    </nav>
+    <img src="achwlediani_icon.png" alt="Logo">
+    <h1>Project Showcase</h1>
 </header>
-<section id="about">
-    <h1>About Me</h1>
-    <p>Welcome! I am Iweri, a seasoned Software Testing Engineer dedicated to ensuring the quality and reliability of software products. With extensive experience in blackbox and whitebox testing, I offer comprehensive testing solutions tailored to meet the unique needs of each project. My commitment to excellence and attention to detail ensure that your software goals are achieved efficiently and effectively.</p>
-</section>
-<section id="services">
-    <h2>Services</h2>
-    <p>I provide a wide range of software testing services to ensure your products are flawless and ready for market:</p>
-    <ul>
-        <li><strong>Blackbox Testing:</strong> Validate software functionality without looking at internal code structures.</li>
-        <li><strong>Whitebox Testing:</strong> Analyze and verify internal code to enhance performance and security.</li>
-        <li><strong>Automation Testing:</strong> Implement automated tests to increase testing efficiency and coverage.</li>
-        <li><strong>Manual Testing:</strong> Perform detailed manual tests to catch subtle bugs that automated tests might miss.</li>
-        <li><strong>Web Testing:</strong> Ensure your web applications are robust, responsive, and user-friendly.</li>
-        <li><strong>Desktop Testing:</strong> Verify the performance and reliability of your desktop applications across various environments.</li>
-        <li><strong>Mobile Testing:</strong> Test mobile applications to ensure they work seamlessly on all devices and operating systems.</li>
-    </ul>
-</section>
-<section id="knowledge">
-    <h2>Knowledge</h2>
-    <p>With a deep understanding of the latest testing methodologies and tools, I bring a wealth of knowledge to every project:</p>
-    <ul>
-        <li>Certified ISTQB Foundation Level Tester</li>
-        <li>Proficient in Selenium, JUnit, TestNG, and other industry-standard testing frameworks</li>
-        <li>Experienced in Agile and DevOps environments</li>
-        <li>Skilled in performance testing, security testing, and usability testing</li>
-        <li>Strong problem-solving abilities and analytical skills</li>
-    </ul>
-</section>
-<section id="value">
-    <h2>Value</h2>
-    <p>My goal is to deliver high-quality software products by identifying and addressing defects early in the development process. I bring a keen eye for detail, strong analytical skills, and a commitment to excellence. Here’s what sets me apart:</p>
-    <ul>
-        <li><strong>Proven Track Record:</strong> Successfully delivered numerous projects, ensuring high customer satisfaction.</li>
-        <li><strong>Client-Centric Approach:</strong> Tailor my testing strategies to meet the specific needs of each client.</li>
-        <li><strong>Continuous Improvement:</strong> Stay updated with the latest trends and advancements in software testing.</li>
-        <li><strong>Quality Assurance:</strong> Ensure thorough and effective testing to deliver reliable and secure software products.</li>
-    </ul>
-</section>
-<section id="contact">
-    <h2>Contact</h2>
-    <p>If you are looking for a reliable and skilled software testing engineer to help you achieve your software goals, feel free to reach out:</p>
-    <form class="contact-form">
-        <input type="text" name="name" placeholder="Your Name" required>
-        <input type="email" name="email" placeholder="Your Email" required>
-        <textarea name="message" placeholder="Your Message" required></textarea>
-        <button type="submit">Send</button>
-    </form>
-</section>
-<footer>
-    <p>Connect with me on <a href="#">LinkedIn</a> | <a href="#">GitHub</a></p>
-</footer>
-</body>
-</html>
-</title>
-</head>
-<body>
-
+<div class="container">
+    <section class="project">
+        <h2>Project 1: Project Name</h2>
+        <p>Description of the project. What it does, how it was built, technologies used, etc.</p>
+    </section>
+    <section class="project">
+        <h2>Project 2: Project Name</h2>
+        <p>Description of the project. What it does, how it was built, technologies used, etc.</p>
+    </section>
+    <section class="project">
+        <h2>Project 3: Project Name</h2>
+        <p>Description of the project. What it does, how it was built, technologies used, etc.</p>
+    </section>
+    <!-- Add more projects as needed -->
+</div>
 </body>
 </html>
