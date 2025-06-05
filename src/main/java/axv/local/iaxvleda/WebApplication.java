@@ -21,8 +21,10 @@ public class WebApplication {
 		//http://localhost:8080/hello?name=Amy
 	}
 
+
        @GetMapping("/index")
        public String index(Model model) {
                return "index";
        }
+
 }
