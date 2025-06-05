@@ -241,6 +241,7 @@
     </a>
 </div>
 <canvas id="mouseTrailCanvas"></canvas>
+<canvas id="neuralCanvas" width="600" height="400" style="margin: 2rem auto;"></canvas>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const canvas = document.getElementById('mouseTrailCanvas');
@@ -292,6 +293,55 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const nnCanvas = document.getElementById('neuralCanvas');
+        if (!nnCanvas) return;
+        const nnCtx = nnCanvas.getContext('2d');
+
+        const nodes = [];
+        const nodeCount = 8;
+
+        nnCanvas.width = nnCanvas.width || 600;
+        nnCanvas.height = nnCanvas.height || 400;
+
+        for (let i = 0; i < nodeCount; i++) {
+            nodes.push({
+                x: Math.random() * nnCanvas.width,
+                y: Math.random() * nnCanvas.height,
+                r: 4 + Math.random() * 3,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+
+        function drawNetwork() {
+            nnCtx.clearRect(0, 0, nnCanvas.width, nnCanvas.height);
+            nnCtx.strokeStyle = 'rgba(255,255,255,0.2)';
+            nodes.forEach((n, i) => {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const m = nodes[j];
+                    nnCtx.beginPath();
+                    nnCtx.moveTo(n.x, n.y);
+                    nnCtx.lineTo(m.x, m.y);
+                    nnCtx.stroke();
+                }
+            });
+
+            nodes.forEach(n => {
+                n.phase += 0.05;
+                const pulse = 1 + Math.sin(n.phase) * 2;
+                nnCtx.beginPath();
+                nnCtx.arc(n.x, n.y, n.r + pulse, 0, Math.PI * 2);
+                nnCtx.fillStyle = 'rgba(0,200,255,0.8)';
+                nnCtx.fill();
+            });
+            requestAnimationFrame(drawNetwork);
+        }
+
+        drawNetwork();
     });
 </script>
 
