@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-This project hosts a GitHub Pages site built with Jekyll using the **minimal-mistakes** theme.
+This project hosts a GitHub Pages site built with Jekyll using the **minimal-mistakes** theme. The public site is a single page with sections for services, portfolio, testimonials, and a contact form.
 
 ## Building the Site
 - Install Ruby dependencies with `bundle install`.
