@@ -11,6 +11,7 @@ permalink: /
   <a href="#about">About</a> |
   <a href="#services">Services</a> |
   <a href="#portfolio">Portfolio</a> |
+  <a href="{{ '/interactive-nn.html' | relative_url }}">NN Demo</a> |
   <a href="#contact">Contact</a>
 </nav>
 
