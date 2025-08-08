@@ -4,7 +4,7 @@ title: "Software Quality Assurance"
 permalink: /
 ---
 
-<link rel="stylesheet" href="/assets/css/portfolio.css">
+<link rel="stylesheet" href="{{ '/assets/css/portfolio.css' | relative_url }}">
 
 <nav>
   <a href="#home">Home</a> |
