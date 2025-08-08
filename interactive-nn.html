@@ -1,0 +1,173 @@
+---
+layout: none
+---
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Interactive NN</title>
+<style>
+  body{margin:0;background:#0e0f12;color:#e6e6e6;font:14px/1.4 system-ui}
+  #ui{position:fixed;top:10px;left:10px;background:#1b1e24;padding:10px 12px;border-radius:10px}
+  label{margin-right:8px}
+  canvas{display:block;width:100vw;height:100vh}
+  .badge{background:#2a2f3a;padding:2px 6px;border-radius:6px;margin-left:6px}
+</style>
+</head>
+<body>
+<div id="ui">
+  <label>Aktivierung:
+    <select id="act">
+      <option>relu</option>
+      <option>sigmoid</option>
+      <option>tanh</option>
+    </select>
+  </label>
+  <label>Einfluss σ: <input id="sigma" type="range" min="40" max="300" value="120"/></label>
+  <button id="reinit">Reinit</button>
+  <span id="fps" class="badge">FPS</span>
+</div>
+<canvas id="c"></canvas>
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const actSel = document.getElementById('act');
+  const sigmaInput = document.getElementById('sigma');
+  const fpsBadge = document.getElementById('fps');
+  const reinitBtn = document.getElementById('reinit');
+
+  let W, H, mouse = {x:0,y:0}, frozen = new Set(), lastT=performance.now(), frames=0, fps=0;
+  const LAYERS = [3, 5, 3]; // I-H-O
+  let nodes=[], edges=[], weights=[], biases=[];
+
+  function resize(){
+    canvas.width = W = innerWidth;
+    canvas.height = H = innerHeight;
+    layout();
+  }
+  addEventListener('resize', resize);
+  addEventListener('mousemove', e => {mouse.x = e.clientX; mouse.y = e.clientY;});
+  addEventListener('click', e => toggleFreeze(hitNode(e.clientX,e.clientY)));
+  reinitBtn.onclick = init;
+
+  function randn(){ // small Gaussian-ish via CLT
+    let s=0; for(let i=0;i<6;i++) s+=Math.random(); return (s-3)/3;
+  }
+  function init(){
+    nodes=[]; edges=[]; weights=[]; biases=[];
+    for (let l=0; l<LAYERS.length; l++){
+      nodes[l] = Array.from({length: LAYERS[l]}, () => ({a:0, frozen:false, x:0, y:0}));
+      biases[l] = Array.from({length: LAYERS[l]}, () => l===0?0:randn()*0.2);
+      if (l>0){
+        weights[l] = Array.from({length: LAYERS[l]}, () =>
+          Array.from({length: LAYERS[l-1]}, () => randn()*0.7));
+      }
+    }
+    layout();
+  }
+  function layout(){
+    const marginX=120, marginY=80;
+    for (let l=0; l<LAYERS.length; l++){
+      const x = marginX + l*( (W-2*marginX)/ (LAYERS.length-1) );
+      for (let i=0; i<LAYERS[l]; i++){
+        const y = marginY + i*( (H-2*marginY)/ (LAYERS[l]-1||1) );
+        nodes[l][i].x = x; nodes[l][i].y = y;
+      }
+    }
+    // edges
+    edges=[];
+    for (let l=1; l<LAYERS.length; l++){
+      for (let j=0; j<LAYERS[l]; j++){
+        for (let i=0; i<LAYERS[l-1]; i++){
+          edges.push({from:[l-1,i], to:[l,j]});
+        }
+      }
+    }
+  }
+
+  function activation(name, z){
+    if(name==='relu') return Math.max(0,z);
+    if(name==='sigmoid') return 1/(1+Math.exp(-z));
+    if(name==='tanh') return Math.tanh(z);
+    return z;
+  }
+
+  function compute(){
+    const σ = Number(sigmaInput.value);
+    // Inputs: based on mouse proximity to 3 anchor points
+    const inputs = nodes[0].map(n => {
+      const dx = n.x - mouse.x, dy = n.y - mouse.y;
+      const dist2 = dx*dx + dy*dy;
+      return Math.exp(-dist2/(2*σ*σ)); // Gaussian falloff
+    });
+    nodes[0].forEach((n,i)=>{ if(!n.frozen) n.a = inputs[i]; });
+
+    for (let l=1; l<LAYERS.length; l++){
+      for (let j=0; j<LAYERS[l]; j++){
+        if(nodes[l][j].frozen) continue;
+        let z = biases[l][j];
+        for (let i=0; i<LAYERS[l-1]; i++) z += nodes[l-1][i].a * weights[l][j][i];
+        nodes[l][j].a = activation(actSel.value, z);
+      }
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // draw edges
+    for (const e of edges){
+      const [l1,i] = e.from, [l2,j] = e.to;
+      const a = nodes[l1][i].a, b = nodes[l2][j].a, w = weights[l2][j][i];
+      const strength = Math.abs(w)* (a+b)/2;
+      ctx.lineWidth = 0.5 + 4*strength;
+      ctx.strokeStyle = w>=0 ? `rgba(60,170,255,0.5)` : `rgba(255,90,120,0.4)`;
+      ctx.beginPath();
+      ctx.moveTo(nodes[l1][i].x, nodes[l1][i].y);
+      ctx.lineTo(nodes[l2][j].x, nodes[l2][j].y);
+      ctx.stroke();
+    }
+    // draw nodes
+    for (let l=0; l<LAYERS.length; l++){
+      for (let i=0; i<LAYERS[l]; i++){
+        const n = nodes[l][i];
+        const r = 14 + 8*n.a;
+        const hue = 210 - 210*Math.min(1,n.a);
+        ctx.beginPath();
+        ctx.fillStyle = `hsl(${hue},70%,55%)`;
+        ctx.arc(n.x, n.y, r, 0, Math.PI*2);
+        ctx.fill();
+        if(n.frozen){
+          ctx.strokeStyle = "#ffd166";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function hitNode(x,y){
+    for (let l=0; l<LAYERS.length; l++){
+      for (let i=0; i<LAYERS[l]; i++){
+        const n=nodes[l][i], dx=n.x-x, dy=n.y-y;
+        if (dx*dx+dy*dy < 18*18) return [l,i];
+      }
+    }
+    return null;
+  }
+  function toggleFreeze(idx){
+    if(!idx) return;
+    const [l,i] = idx; nodes[l][i].frozen = !nodes[l][i].frozen;
+  }
+
+  function loop(t){
+    frames++; if(t-lastT>500){ fps=Math.round(frames*1000/(t-lastT)); frames=0; lastT=t; fpsBadge.textContent=`${fps} FPS`; }
+    compute(); draw(); requestAnimationFrame(loop);
+  }
+
+  resize(); init(); requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
