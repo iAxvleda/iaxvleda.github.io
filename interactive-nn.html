@@ -38,8 +38,8 @@ layout: none
   const fpsBadge = document.getElementById('fps');
   const reinitBtn = document.getElementById('reinit');
 
-  let W, H, mouse = {x:0,y:0}, frozen = new Set(), lastT=performance.now(), frames=0, fps=0;
-  const LAYERS = [27, 15, 39]; // I-H-O
+  let W, H, mouse = {x:0,y:0,down:false}, frozen = new Set(), lastT=performance.now(), frames=0, fps=0;
+  const LAYERS = [60, 40, 60]; // I-H-O, more nodes
   let nodes=[], edges=[], weights=[], biases=[];
 
   function resize(){
@@ -49,6 +49,8 @@ layout: none
   }
   addEventListener('resize', resize);
   addEventListener('mousemove', e => {mouse.x = e.clientX; mouse.y = e.clientY;});
+  addEventListener('mousedown', () => {mouse.down = true;});
+  addEventListener('mouseup', () => {mouse.down = false;});
   addEventListener('click', e => toggleFreeze(hitNode(e.clientX,e.clientY)));
   reinitBtn.onclick = init;
 
@@ -58,7 +60,7 @@ layout: none
   function init(){
     nodes=[]; edges=[]; weights=[]; biases=[];
     for (let l=0; l<LAYERS.length; l++){
-      nodes[l] = Array.from({length: LAYERS[l]}, () => ({a:0, frozen:false, x:0, y:0}));
+      nodes[l] = Array.from({length: LAYERS[l]}, () => ({a:0, frozen:false, x:0, y:0, x0:0, y0:0, vx:0, vy:0}));
       biases[l] = Array.from({length: LAYERS[l]}, () => l===0?0:randn()*0.2);
       if (l>0){
         weights[l] = Array.from({length: LAYERS[l]}, () =>
@@ -73,7 +75,7 @@ layout: none
       const x = marginX + l*( (W-2*marginX)/ (LAYERS.length-1) );
       for (let i=0; i<LAYERS[l]; i++){
         const y = marginY + i*( (H-2*marginY)/ (LAYERS[l]-1||1) );
-        nodes[l][i].x = x; nodes[l][i].y = y;
+        nodes[l][i].x = nodes[l][i].x0 = x; nodes[l][i].y = nodes[l][i].y0 = y;
       }
     }
     // edges
@@ -102,14 +104,31 @@ layout: none
       const dist2 = dx*dx + dy*dy;
       return Math.exp(-dist2/(2*σ*σ)); // Gaussian falloff
     });
-    nodes[0].forEach((n,i)=>{ if(!n.frozen) n.a = inputs[i]; });
+    nodes[0].forEach((n,i)=>{ if(!n.frozen) n.a += (inputs[i]-n.a)*0.1; });
 
     for (let l=1; l<LAYERS.length; l++){
       for (let j=0; j<LAYERS[l]; j++){
         if(nodes[l][j].frozen) continue;
         let z = biases[l][j];
         for (let i=0; i<LAYERS[l-1]; i++) z += nodes[l-1][i].a * weights[l][j][i];
-        nodes[l][j].a = activation(actSel.value, z);
+        const target = activation(actSel.value, z);
+        nodes[l][j].a += (target - nodes[l][j].a)*0.1;
+      }
+    }
+  }
+
+  function updatePositions(){
+    for (let l=0; l<LAYERS.length; l++){
+      for (let i=0; i<LAYERS[l]; i++){
+        const n = nodes[l][i];
+        n.vx += (n.x0 - n.x)*0.05;
+        n.vy += (n.y0 - n.y)*0.05;
+        if(mouse.down){
+          n.vx += (mouse.x - n.x)*0.0005;
+          n.vy += (mouse.y - n.y)*0.0005;
+        }
+        n.vx *= 0.85; n.vy *= 0.85;
+        n.x += n.vx; n.y += n.vy;
       }
     }
   }
@@ -163,7 +182,7 @@ layout: none
 
   function loop(t){
     frames++; if(t-lastT>500){ fps=Math.round(frames*1000/(t-lastT)); frames=0; lastT=t; fpsBadge.textContent=`${fps} FPS`; }
-    compute(); draw(); requestAnimationFrame(loop);
+    updatePositions(); compute(); draw(); requestAnimationFrame(loop);
   }
 
   resize(); init(); requestAnimationFrame(loop);
