@@ -45,7 +45,7 @@ layout: none
   function resize(){
     canvas.width = W = innerWidth;
     canvas.height = H = innerHeight;
-    layout();
+    if (nodes.length) layout();
   }
   addEventListener('resize', resize);
   addEventListener('mousemove', e => {mouse.x = e.clientX; mouse.y = e.clientY;});
