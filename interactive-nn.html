@@ -39,7 +39,7 @@ layout: none
   const reinitBtn = document.getElementById('reinit');
 
   let W, H, mouse = {x:0,y:0}, frozen = new Set(), lastT=performance.now(), frames=0, fps=0;
-  const LAYERS = [3, 5, 3]; // I-H-O
+  const LAYERS = [27, 15, 39]; // I-H-O
   let nodes=[], edges=[], weights=[], biases=[];
 
   function resize(){
