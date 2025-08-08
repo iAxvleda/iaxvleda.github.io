@@ -36,7 +36,7 @@ permalink: /
 <section id="portfolio">
   <h2>Portfolio</h2>
   <div class="project-grid">
-{% raw %}{% for case in site.categories['case-studies'] %}{% endraw %}
+{% for case in site.categories['case-studies'] %}
     <article class="project-card" tabindex="0" role="button" onclick="location.href='{{ case.url }}'" aria-label="Mehr über {{ case.title }}">
       <img src="https://picsum.photos/seed/{{ forloop.index }}/400/300" alt="{{ case.title }}">
       <div class="project-content">
@@ -48,7 +48,7 @@ permalink: /
         </div>
       </div>
     </article>
-{% raw %}{% endfor %}{% endraw %}
+{% endfor %}
   </div>
 </section>
 
