@@ -1,19 +1,27 @@
----
-layout: none
----
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Interactive NN</title>
-<style>
-  body{margin:0;background:#0e0f12;color:#e6e6e6;font:14px/1.4 system-ui}
-  #ui{position:fixed;top:10px;left:10px;background:#1b1e24;padding:10px 12px;border-radius:10px}
-  label{margin-right:8px}
-  canvas{display:block;width:100vw;height:100vh}
-  .badge{background:#2a2f3a;padding:2px 6px;border-radius:6px;margin-left:6px}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Interactive NN – Polished</title>
+  <style>
+    :root{--panel:#151821;--panel-2:#1b1e26;--ink:#e6e6e6;--badge:#2a2f3a}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:#0b0d12;color:var(--ink);font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
+    #ui{position:fixed;top:12px;left:12px;background:linear-gradient(180deg,var(--panel),var(--panel-2));padding:10px 12px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(4px);display:flex;gap:10px;align-items:center;z-index:10}
+    #ui label{display:flex;align-items:center;gap:6px;white-space:nowrap}
+    select,input[type=range],button{appearance:none;border:none;border-radius:10px;background:#0f1218;color:var(--ink);padding:6px 10px;box-shadow:inset 0 0 0 1px #2a2f3a}
+    input[type=range]{padding:0;height:6px;border-radius:999px}
+    button{cursor:pointer;transition:transform .05s ease;box-shadow:inset 0 0 0 1px #2a2f3a,0 4px 14px rgba(0,0,0,.35)}
+    button:active{transform:translateY(1px)}
+    .badge{background:var(--badge);padding:4px 8px;border-radius:8px;margin-left:6px;font-variant-numeric:tabular-nums;box-shadow:inset 0 0 0 1px #3b4453}
+    canvas{display:block;width:100vw;height:100vh}
+    .legend{position:fixed;right:12px;bottom:12px;background:linear-gradient(180deg,var(--panel),var(--panel-2));padding:8px 10px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.35);font-size:12px;opacity:.9}
+    .legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px}
+    .sw.pos{background:#62b6ff}
+    .sw.neg{background:#ff768e}
+  </style>
 </head>
 <body>
 <div id="ui">
@@ -25,168 +33,255 @@ layout: none
     </select>
   </label>
   <label>Einfluss σ: <input id="sigma" type="range" min="40" max="300" value="120"/></label>
-  <button id="reinit">Reinit</button>
+  <button id="reinit" title="Gewichte/Biases neu initialisieren">Reinit</button>
   <span id="fps" class="badge">FPS</span>
 </div>
+<div class="legend"><span class="sw pos"></span>positive Gewichtung · <span class="sw neg"></span>negative Gewichtung</div>
 <canvas id="c"></canvas>
 <script>
-(() => {
-  const canvas = document.getElementById('c');
-  const ctx = canvas.getContext('2d');
-  const actSel = document.getElementById('act');
-  const sigmaInput = document.getElementById('sigma');
-  const fpsBadge = document.getElementById('fps');
-  const reinitBtn = document.getElementById('reinit');
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const actSel = document.getElementById('act');
+    const sigmaInput = document.getElementById('sigma');
+    const fpsBadge = document.getElementById('fps');
+    const reinitBtn = document.getElementById('reinit');
 
-  let W, H, mouse = {x:0,y:0,down:false}, frozen = new Set(), lastT=performance.now(), frames=0, fps=0;
-  const LAYERS = [60, 40, 60]; // I-H-O, more nodes
-  let nodes=[], edges=[], weights=[], biases=[];
+    let CSS_W, CSS_H, DPR=1, mouse = {x:0,y:0,down:false}, lastT=performance.now(), frames=0, fps=0;
+    const LAYERS = [60, 40, 60]; // I-H-O
+    let nodes=[], edges=[], weights=[], biases=[];
 
-  function resize(){
-    canvas.width = W = innerWidth;
-    canvas.height = H = innerHeight;
-    if (nodes.length) layout();
-  }
-  addEventListener('resize', resize);
-  addEventListener('mousemove', e => {mouse.x = e.clientX; mouse.y = e.clientY;});
-  addEventListener('mousedown', () => {mouse.down = true;});
-  addEventListener('mouseup', () => {mouse.down = false;});
-  addEventListener('click', e => toggleFreeze(hitNode(e.clientX,e.clientY)));
-  reinitBtn.onclick = init;
-
-  function randn(){ // small Gaussian-ish via CLT
-    let s=0; for(let i=0;i<6;i++) s+=Math.random(); return (s-3)/3;
-  }
-  function init(){
-    nodes=[]; edges=[]; weights=[]; biases=[];
-    for (let l=0; l<LAYERS.length; l++){
-      nodes[l] = Array.from({length: LAYERS[l]}, () => ({a:0, frozen:false, x:0, y:0, x0:0, y0:0, vx:0, vy:0}));
-      biases[l] = Array.from({length: LAYERS[l]}, () => l===0?0:randn()*0.2);
-      if (l>0){
-        weights[l] = Array.from({length: LAYERS[l]}, () =>
-          Array.from({length: LAYERS[l-1]}, () => randn()*0.7));
-      }
+    function setupDPR(){
+      DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      CSS_W = innerWidth; CSS_H = innerHeight;
+      canvas.width = Math.floor(CSS_W * DPR);
+      canvas.height = Math.floor(CSS_H * DPR);
+      canvas.style.width = CSS_W + 'px';
+      canvas.style.height = CSS_H + 'px';
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
     }
-    layout();
-  }
-  function layout(){
-    const marginX=120, marginY=80;
-    for (let l=0; l<LAYERS.length; l++){
-      const x = marginX + l*( (W-2*marginX)/ (LAYERS.length-1) );
-      for (let i=0; i<LAYERS[l]; i++){
-        const y = marginY + i*( (H-2*marginY)/ (LAYERS[l]-1||1) );
-        nodes[l][i].x = nodes[l][i].x0 = x; nodes[l][i].y = nodes[l][i].y0 = y;
-      }
+
+    function resize(){
+      setupDPR();
+      if (nodes.length) layout();
     }
-    // edges
-    edges=[];
-    for (let l=1; l<LAYERS.length; l++){
-      for (let j=0; j<LAYERS[l]; j++){
-        for (let i=0; i<LAYERS[l-1]; i++){
-          edges.push({from:[l-1,i], to:[l,j]});
+    addEventListener('resize', resize);
+    addEventListener('mousemove', e => {mouse.x = e.clientX; mouse.y = e.clientY;});
+    addEventListener('mousedown', () => {mouse.down = true;});
+    addEventListener('mouseup', () => {mouse.down = false;});
+    addEventListener('click', e => toggleFreeze(hitNode(e.clientX,e.clientY)));
+    reinitBtn.onclick = init;
+
+    function randn(){ let s=0; for(let i=0;i<6;i++) s+=Math.random(); return (s-3)/3; }
+
+    function init(){
+      nodes=[]; edges=[]; weights=[]; biases=[];
+      for (let l=0; l<LAYERS.length; l++){
+        nodes[l] = Array.from({length: LAYERS[l]}, () => ({a:0, frozen:false, x:0, y:0, x0:0, y0:0, vx:0, vy:0}));
+        biases[l] = Array.from({length: LAYERS[l]}, () => l===0?0:randn()*0.2);
+        if (l>0){
+          weights[l] = Array.from({length: LAYERS[l]}, () =>
+            Array.from({length: LAYERS[l-1]}, () => randn()*0.7));
+        }
+      }
+      layout();
+    }
+
+    function layout(){
+      const marginX=140, marginY=80;
+      const spanX = (CSS_W - 2*marginX) / (LAYERS.length-1);
+      for (let l=0; l<LAYERS.length; l++){
+        const x = marginX + l*spanX;
+        for (let i=0; i<LAYERS[l]; i++){
+          const y = marginY + i * ((CSS_H-2*marginY) / Math.max(1, LAYERS[l]-1));
+          const n = nodes[l][i];
+          n.x = n.x0 = x; n.y = n.y0 = y; n.vx = 0; n.vy = 0;
+        }
+      }
+      // edges (dense, cached)
+      edges=[];
+      for (let l=1; l<LAYERS.length; l++){
+        for (let j=0; j<LAYERS[l]; j++){
+          for (let i=0; i<LAYERS[l-1]; i++){
+            edges.push({from:[l-1,i], to:[l,j], k:(i+j+1)});
+          }
         }
       }
     }
-  }
 
-  function activation(name, z){
-    if(name==='relu') return Math.max(0,z);
-    if(name==='sigmoid') return 1/(1+Math.exp(-z));
-    if(name==='tanh') return Math.tanh(z);
-    return z;
-  }
-
-  function compute(){
-    const σ = Number(sigmaInput.value);
-    // Inputs: based on mouse proximity to 3 anchor points
-    const inputs = nodes[0].map(n => {
-      const dx = n.x - mouse.x, dy = n.y - mouse.y;
-      const dist2 = dx*dx + dy*dy;
-      return Math.exp(-dist2/(2*σ*σ)); // Gaussian falloff
-    });
-    nodes[0].forEach((n,i)=>{ if(!n.frozen) n.a += (inputs[i]-n.a)*0.1; });
-
-    for (let l=1; l<LAYERS.length; l++){
-      for (let j=0; j<LAYERS[l]; j++){
-        if(nodes[l][j].frozen) continue;
-        let z = biases[l][j];
-        for (let i=0; i<LAYERS[l-1]; i++) z += nodes[l-1][i].a * weights[l][j][i];
-        const target = activation(actSel.value, z);
-        nodes[l][j].a += (target - nodes[l][j].a)*0.1;
-      }
+    function activation(name, z){
+      if(name==='relu') return Math.max(0,z);
+      if(name==='sigmoid') return 1/(1+Math.exp(-z));
+      if(name==='tanh') return Math.tanh(z);
+      return z;
     }
-  }
 
-  function updatePositions(){
-    for (let l=0; l<LAYERS.length; l++){
-      for (let i=0; i<LAYERS[l]; i++){
-        const n = nodes[l][i];
-        n.vx += (n.x0 - n.x)*0.05;
-        n.vy += (n.y0 - n.y)*0.05;
-        if(mouse.down){
-          n.vx += (mouse.x - n.x)*0.0005;
-          n.vy += (mouse.y - n.y)*0.0005;
+    function compute(){
+      const s = Number(sigmaInput.value);
+      const s2 = 2*s*s;
+      // Inputs via Maus-Gaussian
+      const inputs = nodes[0].map(n => {
+        const dx = n.x - mouse.x, dy = n.y - mouse.y;
+        return Math.exp(-(dx*dx + dy*dy)/s2);
+      });
+      nodes[0].forEach((n,i)=>{ if(!n.frozen) n.a += (inputs[i]-n.a)*0.12; });
+
+      for (let l=1; l<LAYERS.length; l++){
+        for (let j=0; j<LAYERS[l]; j++){
+          const n = nodes[l][j];
+          if(n.frozen) continue;
+          let z = biases[l][j];
+          const prev = nodes[l-1];
+          const w = weights[l][j];
+          for (let i=0; i<prev.length; i++) z += prev[i].a * w[i];
+          const target = activation(actSel.value, z);
+          n.a += (target - n.a)*0.12;
         }
-        n.vx *= 0.85; n.vy *= 0.85;
-        n.x += n.vx; n.y += n.vy;
       }
     }
-  }
 
-  function draw(){
-    ctx.clearRect(0,0,W,H);
-    // draw edges
-    for (const e of edges){
-      const [l1,i] = e.from, [l2,j] = e.to;
-      const a = nodes[l1][i].a, b = nodes[l2][j].a, w = weights[l2][j][i];
-      const strength = Math.abs(w)* (a+b)/2;
-      ctx.lineWidth = 0.5 + 4*strength;
-      ctx.strokeStyle = w>=0 ? `rgba(60,170,255,0.5)` : `rgba(255,90,120,0.4)`;
-      ctx.beginPath();
-      ctx.moveTo(nodes[l1][i].x, nodes[l1][i].y);
-      ctx.lineTo(nodes[l2][j].x, nodes[l2][j].y);
-      ctx.stroke();
+    function updatePositions(){
+      const pull=0.06, damp=0.84;
+      for (let l=0; l<LAYERS.length; l++){
+        for (let i=0; i<LAYERS[l]; i++){
+          const n = nodes[l][i];
+          n.vx += (n.x0 - n.x)*pull;
+          n.vy += (n.y0 - n.y)*pull;
+          if(mouse.down){ n.vx += (mouse.x - n.x)*0.00045; n.vy += (mouse.y - n.y)*0.00045; }
+          n.vx *= damp; n.vy *= damp;
+          n.x += n.vx; n.y += n.vy;
+        }
+      }
     }
-    // draw nodes
-    for (let l=0; l<LAYERS.length; l++){
-      for (let i=0; i<LAYERS[l]; i++){
-        const n = nodes[l][i];
-        const r = 14 + 8*n.a;
-        const hue = 210 - 210*Math.min(1,n.a);
+
+    // --- Rendering helpers ---
+    function drawBackground(t){
+      const g = ctx.createLinearGradient(0,0,0,CSS_H);
+      g.addColorStop(0, '#0b0d12');
+      g.addColorStop(1, '#0e1220');
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,CSS_W,CSS_H);
+
+      // subtle moving vignette
+      ctx.save();
+      ctx.globalCompositeOperation = 'overlay';
+      const r = Math.max(CSS_W, CSS_H)*0.8;
+      const cx = CSS_W*0.5 + Math.cos(t*0.0003)*CSS_W*0.08;
+      const cy = CSS_H*0.5 + Math.sin(t*0.0004)*CSS_H*0.06;
+      const rg = ctx.createRadialGradient(cx,cy, r*0.1, cx,cy, r);
+      rg.addColorStop(0,'rgba(40,60,120,0.20)');
+      rg.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+
+    function drawEdges(){
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter'; // additive for glow
+      for (const e of edges){
+        const [l1,i] = e.from, [l2,j] = e.to;
+        const n1 = nodes[l1][i];
+        const n2 = nodes[l2][j];
+        const a = n1.a, b = n2.a, w = weights[l2][j][i];
+        const strength = Math.max(0, Math.abs(w) * (a+b)*0.5);
+        if (strength < 0.02) continue; // prune faint edges for clarity/perf
+
+        // curved line control point
+        const mx = (n1.x + n2.x)/2;
+        const my = (n1.y + n2.y)/2;
+        const dx = n2.x - n1.x, dy = n2.y - n1.y;
+        const len = Math.hypot(dx,dy) || 1;
+        const nx = -dy/len, ny = dx/len; // normal
+        const bow = Math.min(60, 12 + 48*strength) * ((i%2?-1:1));
+        const cx = mx + nx*bow;
+        const cy = my + ny*bow;
+
+        ctx.lineWidth = 0.6 + 4.5*strength;
+        const alpha = Math.min(0.55, 0.12 + strength*0.6);
+        ctx.strokeStyle = w>=0 ? `rgba(98,182,255,${alpha})` : `rgba(255,118,142,${alpha})`;
+
         ctx.beginPath();
-        ctx.fillStyle = `hsl(${hue},70%,55%)`;
-        ctx.arc(n.x, n.y, r, 0, Math.PI*2);
-        ctx.fill();
-        if(n.frozen){
-          ctx.strokeStyle = "#ffd166";
-          ctx.lineWidth = 2;
+        ctx.moveTo(n1.x, n1.y);
+        ctx.quadraticCurveTo(cx, cy, n2.x, n2.y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawNodes(t){
+      for (let l=0; l<LAYERS.length; l++){
+        for (let i=0; i<LAYERS[l]; i++){
+          const n = nodes[l][i];
+          const r = 10 + 9*n.a; // responsive radius
+
+          // glow
+          ctx.save();
+          ctx.shadowBlur = 25 + 40*n.a;
+          ctx.shadowColor = 'rgba(120,170,255,0.35)';
+
+          const g = ctx.createRadialGradient(n.x, n.y, 1, n.x, n.y, Math.max(16, r*1.4));
+          const hue = 210 - 210*Math.min(1,n.a);
+          g.addColorStop(0, `hsla(${hue}, 95%, 70%, 1)`);
+          g.addColorStop(0.7, `hsla(${hue}, 70%, 50%, 0.9)`);
+          g.addColorStop(1, `hsla(${hue}, 60%, 35%, 0.0)`);
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r*1.2, 0, Math.PI*2);
+          ctx.fill();
+          ctx.restore();
+
+          // core
+          ctx.beginPath();
+          ctx.fillStyle = `hsl(${hue},85%,60%)`;
+          ctx.arc(n.x, n.y, r*0.72, 0, Math.PI*2);
+          ctx.fill();
+
+          // ring
+          ctx.lineWidth = 1.5 + 2.5*n.a;
+          ctx.strokeStyle = `hsla(${hue},80%,70%,${0.8})`;
           ctx.stroke();
+
+          if(n.frozen){
+            ctx.beginPath();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#ffd166';
+            ctx.setLineDash([4,3]);
+            ctx.arc(n.x, n.y, r*0.95, 0, Math.PI*2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
         }
       }
     }
-  }
 
-  function hitNode(x,y){
-    for (let l=0; l<LAYERS.length; l++){
-      for (let i=0; i<LAYERS[l]; i++){
-        const n=nodes[l][i], dx=n.x-x, dy=n.y-y;
-        if (dx*dx+dy*dy < 18*18) return [l,i];
+    function hitNode(x,y){
+      const R = 18;
+      for (let l=0; l<LAYERS.length; l++){
+        for (let i=0; i<LAYERS[l]; i++){
+          const n=nodes[l][i], dx=n.x-x, dy=n.y-y;
+          if (dx*dx+dy*dy < R*R) return [l,i];
+        }
       }
+      return null;
     }
-    return null;
-  }
-  function toggleFreeze(idx){
-    if(!idx) return;
-    const [l,i] = idx; nodes[l][i].frozen = !nodes[l][i].frozen;
-  }
+    function toggleFreeze(idx){ if(idx==null) return; const [l,i] = idx; nodes[l][i].frozen = !nodes[l][i].frozen; }
 
-  function loop(t){
-    frames++; if(t-lastT>500){ fps=Math.round(frames*1000/(t-lastT)); frames=0; lastT=t; fpsBadge.textContent=`${fps} FPS`; }
-    updatePositions(); compute(); draw(); requestAnimationFrame(loop);
-  }
+    function loop(t){
+      frames++; if(t-lastT>500){ fps=Math.round(frames*1000/(t-lastT)); frames=0; lastT=t; fpsBadge.textContent=`${fps} FPS`; }
+      updatePositions();
+      compute();
 
-  resize(); init(); requestAnimationFrame(loop);
-})();
+      drawBackground(t);
+      drawEdges();
+      drawNodes(t);
+
+      requestAnimationFrame(loop);
+    }
+
+    resize(); init(); requestAnimationFrame(loop);
+  })();
 </script>
 </body>
 </html>
