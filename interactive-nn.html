@@ -21,6 +21,7 @@
     .legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px}
     .sw.pos{background:#62b6ff}
     .sw.neg{background:#ff768e}
+    .value{min-width:2ch;text-align:right}
   </style>
 </head>
 <body>
@@ -32,7 +33,10 @@
       <option>tanh</option>
     </select>
   </label>
-  <label>Einfluss σ: <input id="sigma" type="range" min="40" max="300" value="120"/></label>
+  <label>Einfluss σ: <input id="sigma" type="range" min="40" max="300" value="120"/><span id="sigmaV" class="badge value">120</span></label>
+  <label>Spalten: <input id="cols" type="range" min="2" max="6" value="3"/><span id="colsV" class="badge value">3</span></label>
+  <label>Zeilen: <input id="rows" type="range" min="10" max="100" value="60"/><span id="rowsV" class="badge value">60</span></label>
+  <label>Animation: <input id="anim" type="range" min="0" max="100" value="50"/><span id="animV" class="badge value">50</span></label>
   <button id="reinit" title="Gewichte/Biases neu initialisieren">Reinit</button>
   <span id="fps" class="badge">FPS</span>
 </div>
@@ -44,11 +48,24 @@
     const ctx = canvas.getContext('2d');
     const actSel = document.getElementById('act');
     const sigmaInput = document.getElementById('sigma');
+    const sigmaV = document.getElementById('sigmaV');
     const fpsBadge = document.getElementById('fps');
     const reinitBtn = document.getElementById('reinit');
+    const colsInput = document.getElementById('cols');
+    const rowsInput = document.getElementById('rows');
+    const animInput = document.getElementById('anim');
+    const colsV = document.getElementById('colsV');
+    const rowsV = document.getElementById('rowsV');
+    const animV = document.getElementById('animV');
 
     let CSS_W, CSS_H, DPR=1, mouse = {x:0,y:0,down:false}, lastT=performance.now(), frames=0, fps=0;
-    const LAYERS = [60, 40, 60]; // I-H-O
+
+    // Architektur (per Slider steuerbar)
+    let COLS = Number(colsInput.value);
+    let ROWS = Number(rowsInput.value);
+    let LAYERS = Array.from({length: COLS}, () => ROWS);
+    let ANIM = animInput.value/100; // 0..1
+
     let nodes=[], edges=[], weights=[], biases=[];
 
     function setupDPR(){
@@ -72,18 +89,30 @@
     addEventListener('mousedown', () => {mouse.down = true;});
     addEventListener('mouseup', () => {mouse.down = false;});
     addEventListener('click', e => toggleFreeze(hitNode(e.clientX,e.clientY)));
-    reinitBtn.onclick = init;
+    reinitBtn.onclick = () => init(true);
+
+    // Slider-Events
+    sigmaInput.oninput = () => sigmaV.textContent = sigmaInput.value;
+    colsInput.oninput = () => { COLS = Number(colsInput.value); colsV.textContent = COLS; rebuildAndInit(); };
+    rowsInput.oninput = () => { ROWS = Number(rowsInput.value); rowsV.textContent = ROWS; rebuildAndInit(); };
+    animInput.oninput = () => { ANIM = animInput.value/100; animV.textContent = animInput.value; };
+
+    function rebuildAndInit(){
+      LAYERS = Array.from({length: COLS}, () => ROWS);
+      init(false);
+    }
 
     function randn(){ let s=0; for(let i=0;i<6;i++) s+=Math.random(); return (s-3)/3; }
 
-    function init(){
+    function init(randomizeWeights){
       nodes=[]; edges=[]; weights=[]; biases=[];
       for (let l=0; l<LAYERS.length; l++){
         nodes[l] = Array.from({length: LAYERS[l]}, () => ({a:0, frozen:false, x:0, y:0, x0:0, y0:0, vx:0, vy:0}));
-        biases[l] = Array.from({length: LAYERS[l]}, () => l===0?0:randn()*0.2);
+        // biases: Eingangsschicht = 0; sonst beibehalten oder neu
+        biases[l] = Array.from({length: LAYERS[l]}, (_,j) => l===0?0:(randomizeWeights!==false?randn()*0.2:(biases[l]?.[j] ?? randn()*0.2)));
         if (l>0){
-          weights[l] = Array.from({length: LAYERS[l]}, () =>
-            Array.from({length: LAYERS[l-1]}, () => randn()*0.7));
+          weights[l] = Array.from({length: LAYERS[l]}, (__,j) =>
+            Array.from({length: LAYERS[l-1]}, (_,i) => (randomizeWeights!==false?randn()*0.7:(weights[l]?.[j]?.[i] ?? randn()*0.7))));
         }
       }
       layout();
@@ -91,11 +120,12 @@
 
     function layout(){
       const marginX=140, marginY=80;
-      const spanX = (CSS_W - 2*marginX) / (LAYERS.length-1);
+      const spanX = (CSS_W - 2*marginX) / Math.max(1,(LAYERS.length-1));
       for (let l=0; l<LAYERS.length; l++){
         const x = marginX + l*spanX;
-        for (let i=0; i<LAYERS[l]; i++){
-          const y = marginY + i * ((CSS_H-2*marginY) / Math.max(1, LAYERS[l]-1));
+        const count = LAYERS[l];
+        for (let i=0; i<count; i++){
+          const y = marginY + i * ((CSS_H-2*marginY) / Math.max(1, count-1));
           const n = nodes[l][i];
           n.x = n.x0 = x; n.y = n.y0 = y; n.vx = 0; n.vy = 0;
         }
@@ -105,7 +135,7 @@
       for (let l=1; l<LAYERS.length; l++){
         for (let j=0; j<LAYERS[l]; j++){
           for (let i=0; i<LAYERS[l-1]; i++){
-            edges.push({from:[l-1,i], to:[l,j], k:(i+j+1)});
+            edges.push({from:[l-1,i], to:[l,j]});
           }
         }
       }
@@ -126,24 +156,27 @@
         const dx = n.x - mouse.x, dy = n.y - mouse.y;
         return Math.exp(-(dx*dx + dy*dy)/s2);
       });
-      nodes[0].forEach((n,i)=>{ if(!n.frozen) n.a += (inputs[i]-n.a)*0.12; });
+      const lerp = (a,b,t)=>a+(b-a)*t;
+      const alpha = ANIM; // 0 ruhig – 1 lebhaft
+
+      nodes[0].forEach((n,i)=>{ if(!n.frozen) n.a += (inputs[i]-n.a)*lerp(0.08,0.18,alpha); });
 
       for (let l=1; l<LAYERS.length; l++){
         for (let j=0; j<LAYERS[l]; j++){
-          const n = nodes[l][j];
-          if(n.frozen) continue;
+          const n = nodes[l][j]; if(n.frozen) continue;
           let z = biases[l][j];
-          const prev = nodes[l-1];
-          const w = weights[l][j];
+          const prev = nodes[l-1]; const w = weights[l][j];
           for (let i=0; i<prev.length; i++) z += prev[i].a * w[i];
           const target = activation(actSel.value, z);
-          n.a += (target - n.a)*0.12;
+          n.a += (target - n.a)*lerp(0.08,0.18,alpha);
         }
       }
     }
 
     function updatePositions(){
-      const pull=0.06, damp=0.84;
+      const lerp=(a,b,t)=>a+(b-a)*t;
+      const pull = lerp(0.04, 0.09, ANIM);
+      const damp = lerp(0.88, 0.80, ANIM);
       for (let l=0; l<LAYERS.length; l++){
         for (let i=0; i<LAYERS[l]; i++){
           const n = nodes[l][i];
@@ -178,6 +211,8 @@
     }
 
     function drawEdges(){
+      const lerp=(a,b,t)=>a+(b-a)*t;
+      const prune = lerp(0.06, 0.015, ANIM); // lebhaft = mehr Kanten sichtbar
       ctx.save();
       ctx.globalCompositeOperation = 'lighter'; // additive for glow
       for (const e of edges){
@@ -186,7 +221,7 @@
         const n2 = nodes[l2][j];
         const a = n1.a, b = n2.a, w = weights[l2][j][i];
         const strength = Math.max(0, Math.abs(w) * (a+b)*0.5);
-        if (strength < 0.02) continue; // prune faint edges for clarity/perf
+        if (strength < prune) continue; // prune faint edges
 
         // curved line control point
         const mx = (n1.x + n2.x)/2;
@@ -194,12 +229,12 @@
         const dx = n2.x - n1.x, dy = n2.y - n1.y;
         const len = Math.hypot(dx,dy) || 1;
         const nx = -dy/len, ny = dx/len; // normal
-        const bow = Math.min(60, 12 + 48*strength) * ((i%2?-1:1));
+        const bow = Math.min(60, 10 + 70*strength*ANIM) * ((i%2?-1:1));
         const cx = mx + nx*bow;
         const cy = my + ny*bow;
 
         ctx.lineWidth = 0.6 + 4.5*strength;
-        const alpha = Math.min(0.55, 0.12 + strength*0.6);
+        const alpha = Math.min(0.6, 0.1 + strength*0.7);
         ctx.strokeStyle = w>=0 ? `rgba(98,182,255,${alpha})` : `rgba(255,118,142,${alpha})`;
 
         ctx.beginPath();
@@ -210,7 +245,7 @@
       ctx.restore();
     }
 
-    function drawNodes(t){
+    function drawNodes(){
       for (let l=0; l<LAYERS.length; l++){
         for (let i=0; i<LAYERS[l]; i++){
           const n = nodes[l][i];
@@ -218,7 +253,7 @@
 
           // glow
           ctx.save();
-          ctx.shadowBlur = 25 + 40*n.a;
+          ctx.shadowBlur = 20 + 55*n.a*ANIM;
           ctx.shadowColor = 'rgba(120,170,255,0.35)';
 
           const g = ctx.createRadialGradient(n.x, n.y, 1, n.x, n.y, Math.max(16, r*1.4));
@@ -275,12 +310,12 @@
 
       drawBackground(t);
       drawEdges();
-      drawNodes(t);
+      drawNodes();
 
       requestAnimationFrame(loop);
     }
 
-    resize(); init(); requestAnimationFrame(loop);
+    resize(); init(true); requestAnimationFrame(loop);
   })();
 </script>
 </body>
