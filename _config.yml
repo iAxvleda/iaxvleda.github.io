@@ -7,17 +7,10 @@ plugins:
   - jekyll-redirect-from
 
 locale: "en-US"
-title: "SQA Contractor"
-description: "Professional Software Quality Assurance Services"
+title: "iAx — Quality Engineering"
+description: "Independent quality engineering: test strategy, automation, and release confidence."
 baseurl: ""
-url: ""
+url: "https://iaxvleda.github.io"
 
 # Build settings
 markdown: kramdown
-
-# Google Analytics ID placeholder
-analytics:
-  provider: "google-gtag"
-  google:
-    tracking_id: "UA-XXXXXXXXX-X"
-    anonymize_ip: true

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QA Playbook — iAx Quality Engineering</title>
+  <meta name="description" content="Practical notes on regression risk, CI quality gates, and performance budgets.">
+  <meta name="theme-color" content="#0a1714">
+  <link rel="canonical" href="https://iaxvleda.github.io/playbook/">
+  <link rel="stylesheet" href="/assets/css/portfolio.css">
+  <script src="/assets/js/site.js" defer></script>
+</head>
+<body class="playbook-page">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header scrolled" data-header>
+    <div class="shell header-inner">
+      <a class="brand" href="/" aria-label="iAx Quality Engineering, home">
+        <span class="brand-mark" aria-hidden="true">iA</span>
+        <span class="brand-copy">Quality Engineering</span>
+      </a>
+      <a class="playbook-back" href="/">← Back to portfolio</a>
+    </div>
+  </header>
+
+  <main id="main" class="playbook-main">
+    <section class="playbook-hero">
+      <div class="shell">
+        <p class="eyebrow"><span></span> Practical methodology notes</p>
+        <h1>QA Playbook</h1>
+        <p>Three compact ways to turn quality work into a clearer engineering signal. These are working notes, not anonymous client claims.</p>
+      </div>
+    </section>
+
+    <div class="shell playbook-layout">
+      <aside class="playbook-index" aria-label="On this page">
+        <p>On this page</p>
+        <a href="#regression-risk-mapping">01 · Regression risk</a>
+        <a href="#ci-quality-gates">02 · CI quality gates</a>
+        <a href="#performance-budgets">03 · Performance budgets</a>
+      </aside>
+
+      <div class="playbook-notes">
+        <article class="playbook-note" id="regression-risk-mapping">
+          <p class="section-kicker">Playbook 01</p>
+          <h2>Regression risk mapping</h2>
+          <p class="note-lede">Choose regression coverage by product exposure and impact — not by test count.</p>
+          <h3>Start with risk</h3>
+          <p>Map critical user journeys against two dimensions: how often they change and how costly a failure would be. This makes automation priorities visible before a framework or tool is selected.</p>
+          <h3>A practical sequence</h3>
+          <ol>
+            <li>List the journeys that protect revenue, trust, or access.</li>
+            <li>Mark volatile integrations and frequently changed product areas.</li>
+            <li>Cover stable business rules close to the API or component layer.</li>
+            <li>Keep a small UI suite for paths only a browser can prove.</li>
+            <li>Review the map whenever the product or architecture changes.</li>
+          </ol>
+          <blockquote>The goal is not maximum automation. It is the fastest reliable signal for the risks the team actually carries.</blockquote>
+        </article>
+
+        <article class="playbook-note" id="ci-quality-gates">
+          <p class="section-kicker">Playbook 02</p>
+          <h2>Useful CI quality gates</h2>
+          <p class="note-lede">Turn pipeline output into an actionable release signal.</p>
+          <h3>A gate should help a team decide</h3>
+          <p>A quality gate is useful when it is fast enough to be respected, stable enough to be trusted, and specific enough to explain what failed.</p>
+          <h3>Design principles</h3>
+          <ul>
+            <li>Run deterministic, high-signal checks before expensive suites.</li>
+            <li>Separate infrastructure failures from product failures.</li>
+            <li>Quarantine flaky checks instead of teaching the team to ignore red builds.</li>
+            <li>Publish the failed risk or user journey, not only a test name.</li>
+            <li>Reserve blocking gates for evidence that should genuinely stop a release.</li>
+          </ul>
+          <blockquote>Good CI does not merely report test output. It turns evidence into a clear next action.</blockquote>
+        </article>
+
+        <article class="playbook-note" id="performance-budgets">
+          <p class="section-kicker">Playbook 03</p>
+          <h2>Performance budgets</h2>
+          <p class="note-lede">Catch degradation before customers feel it.</p>
+          <h3>Make performance an engineering constraint</h3>
+          <p>A performance budget defines the response time, throughput, or resource envelope a critical journey must stay inside. It turns a vague aspiration into a signal that can be tracked.</p>
+          <h3>A lightweight approach</h3>
+          <ol>
+            <li>Select a few journeys that represent real user or system pressure.</li>
+            <li>Record a repeatable baseline in a controlled environment.</li>
+            <li>Define a budget around the experience the product needs.</li>
+            <li>Run a small comparison on relevant changes.</li>
+            <li>Investigate trends before they become release-blocking regressions.</li>
+          </ol>
+          <blockquote>Large load tests still have a place. A small, frequent budget catches everyday degradation much earlier.</blockquote>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a class="brand footer-brand" href="/"><span class="brand-mark">iA</span><span class="brand-copy">Quality Engineering</span></a>
+      <p>Built with intent. Tested with curiosity.</p>
+      <p>© <span data-year></span> iAx</p>
+    </div>
+  </footer>
+</body>
+</html>

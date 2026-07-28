@@ -1,20 +1,24 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Interactive NN – Polished</title>
+  <meta name="theme-color" content="#0b0d12"/>
+  <meta name="description" content="Explore neural network activations, weights, and layer density in an interactive canvas playground."/>
+  <title>Neural Network Playground — iAx</title>
   <style>
     :root{--panel:#151821;--panel-2:#1b1e26;--ink:#e6e6e6;--badge:#2a2f3a}
     *{box-sizing:border-box}
     html,body{height:100%}
     body{margin:0;background:#0b0d12;color:var(--ink);font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
-    #ui{position:fixed;top:12px;left:12px;background:linear-gradient(180deg,var(--panel),var(--panel-2));padding:10px 12px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(4px);display:flex;gap:10px;align-items:center;z-index:10}
+    #ui{position:fixed;top:12px;left:12px;background:linear-gradient(180deg,var(--panel),var(--panel-2));padding:10px 12px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(4px);display:flex;flex-wrap:wrap;gap:10px;align-items:center;z-index:10}
     #ui label{display:flex;align-items:center;gap:6px;white-space:nowrap}
-    select,input[type=range],button{appearance:none;border:none;border-radius:10px;background:#0f1218;color:var(--ink);padding:6px 10px;box-shadow:inset 0 0 0 1px #2a2f3a}
+    select,input[type=range],button,.back-link{appearance:none;border:none;border-radius:10px;background:#0f1218;color:var(--ink);padding:6px 10px;box-shadow:inset 0 0 0 1px #2a2f3a}
     input[type=range]{padding:0;height:6px;border-radius:999px}
     button{cursor:pointer;transition:transform .05s ease;box-shadow:inset 0 0 0 1px #2a2f3a,0 4px 14px rgba(0,0,0,.35)}
     button:active{transform:translateY(1px)}
+    button:focus-visible,select:focus-visible,input:focus-visible,.back-link:focus-visible{outline:2px solid #c9ff62;outline-offset:2px}
+    .back-link{text-decoration:none;white-space:nowrap}
     .badge{background:var(--badge);padding:4px 8px;border-radius:8px;margin-left:6px;font-variant-numeric:tabular-nums;box-shadow:inset 0 0 0 1px #3b4453}
     canvas{display:block;width:100vw;height:100vh}
     .legend{position:fixed;right:12px;bottom:12px;background:linear-gradient(180deg,var(--panel),var(--panel-2));padding:8px 10px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.35);font-size:12px;opacity:.9}
@@ -22,25 +26,43 @@
     .sw.pos{background:#62b6ff}
     .sw.neg{background:#ff768e}
     .value{min-width:2ch;text-align:right}
+    #controlsToggle{display:none;position:fixed;top:12px;left:12px;z-index:12;padding:9px 12px}
+    .hint{position:fixed;left:12px;bottom:12px;color:rgba(230,230,230,.5);font-size:11px;z-index:3}
+    @media (max-width:700px){
+      #controlsToggle{display:block}
+      #ui{inset:58px 12px auto;max-height:calc(100vh - 74px);display:grid;align-items:stretch;overflow:auto;transform:translateY(calc(-100% - 80px));transition:transform .22s ease}
+      #ui.open{transform:translateY(0)}
+      #ui label{display:grid;grid-template-columns:84px 1fr auto}
+      #ui select{width:100%}
+      #ui .back-link{text-align:center}
+      .legend{right:10px;bottom:10px;font-size:10px}
+      .hint{display:none}
+    }
+    @media (prefers-reduced-motion:reduce){
+      #ui{transition:none}
+    }
   </style>
 </head>
 <body>
-<div id="ui">
-  <label>Aktivierung:
+<button id="controlsToggle" type="button" aria-expanded="false" aria-controls="ui">Controls</button>
+<div id="ui" aria-label="Neural network controls">
+  <a class="back-link" href="/">← Portfolio</a>
+  <label>Activation:
     <select id="act">
       <option>relu</option>
       <option>sigmoid</option>
       <option>tanh</option>
     </select>
   </label>
-  <label>Einfluss σ: <input id="sigma" type="range" min="40" max="300" value="120"/><span id="sigmaV" class="badge value">120</span></label>
-  <label>Spalten: <input id="cols" type="range" min="2" max="6" value="3"/><span id="colsV" class="badge value">3</span></label>
-  <label>Zeilen: <input id="rows" type="range" min="10" max="100" value="60"/><span id="rowsV" class="badge value">60</span></label>
-  <label>Animation: <input id="anim" type="range" min="0" max="100" value="50"/><span id="animV" class="badge value">50</span></label>
-  <button id="reinit" title="Gewichte/Biases neu initialisieren">Reinit</button>
+  <label>Influence σ: <input id="sigma" type="range" min="40" max="300" value="120"/><span id="sigmaV" class="badge value">120</span></label>
+  <label>Columns: <input id="cols" type="range" min="2" max="6" value="3"/><span id="colsV" class="badge value">3</span></label>
+  <label>Rows: <input id="rows" type="range" min="10" max="100" value="60"/><span id="rowsV" class="badge value">60</span></label>
+  <label>Motion: <input id="anim" type="range" min="0" max="100" value="50"/><span id="animV" class="badge value">50</span></label>
+  <button id="reinit" type="button" title="Randomize weights and biases">Randomize</button>
   <span id="fps" class="badge">FPS</span>
 </div>
-<div class="legend"><span class="sw pos"></span>positive Gewichtung · <span class="sw neg"></span>negative Gewichtung</div>
+<div class="legend"><span class="sw pos"></span>positive weight · <span class="sw neg"></span>negative weight</div>
+<div class="hint">Move to activate · click a node to freeze · hold to pull</div>
 <canvas id="c"></canvas>
 <script>
   (() => {
@@ -57,6 +79,27 @@
     const colsV = document.getElementById('colsV');
     const rowsV = document.getElementById('rowsV');
     const animV = document.getElementById('animV');
+    const ui = document.getElementById('ui');
+    const controlsToggle = document.getElementById('controlsToggle');
+
+    if (innerWidth < 600) {
+      rowsInput.value = 32;
+      rowsV.textContent = rowsInput.value;
+    }
+    const setControlsAvailable = (available) => {
+      ui.setAttribute('aria-hidden', String(!available));
+      ui.querySelectorAll('a,button,input,select').forEach(control => {
+        control.tabIndex = available ? 0 : -1;
+      });
+    };
+    if (innerWidth <= 700) setControlsAvailable(false);
+    controlsToggle.onclick = () => {
+      const open = controlsToggle.getAttribute('aria-expanded') === 'true';
+      controlsToggle.setAttribute('aria-expanded', String(!open));
+      controlsToggle.textContent = open ? 'Controls' : 'Close';
+      ui.classList.toggle('open', !open);
+      setControlsAvailable(open);
+    };
 
     let CSS_W, CSS_H, DPR=1, mouse = {x:0,y:0,down:false}, lastT=performance.now(), frames=0, fps=0;
 
@@ -85,9 +128,10 @@
       if (nodes.length) layout();
     }
     addEventListener('resize', resize);
-    addEventListener('mousemove', e => {mouse.x = e.clientX; mouse.y = e.clientY;});
-    addEventListener('mousedown', () => {mouse.down = true;});
-    addEventListener('mouseup', () => {mouse.down = false;});
+    addEventListener('pointermove', e => {mouse.x = e.clientX; mouse.y = e.clientY;});
+    addEventListener('pointerdown', () => {mouse.down = true;});
+    addEventListener('pointerup', () => {mouse.down = false;});
+    addEventListener('pointercancel', () => {mouse.down = false;});
     addEventListener('click', e => toggleFreeze(hitNode(e.clientX,e.clientY)));
     reinitBtn.onclick = () => init(true);
 
@@ -119,7 +163,8 @@
     }
 
     function layout(){
-      const marginX=140, marginY=80;
+      const marginX = CSS_W < 600 ? 70 : 140;
+      const marginY = CSS_H < 650 ? 65 : 80;
       const spanX = (CSS_W - 2*marginX) / Math.max(1,(LAYERS.length-1));
       for (let l=0; l<LAYERS.length; l++){
         const x = marginX + l*spanX;

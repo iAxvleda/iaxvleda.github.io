@@ -1,0 +1,8 @@
+{
+  "name": "iax-quality-engineering",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-sites.mjs"
+  }
+}
