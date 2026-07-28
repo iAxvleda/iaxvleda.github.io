@@ -24,7 +24,7 @@
   });
 
   const revealTargets = document.querySelectorAll(
-    ".section-heading, .service-card, .featured-project, .note-card, .approach-intro, .process-list li"
+    ".experience-heading, .experience-copy, .experience-stats > div, .section-heading, .service-card, .featured-project, .note-card, .approach-intro, .process-list li"
   );
   revealTargets.forEach((element) => element.setAttribute("data-reveal", ""));
 
