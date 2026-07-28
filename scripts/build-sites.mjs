@@ -7,7 +7,7 @@ const dist = join(root, "dist");
 await rm(dist, { recursive: true, force: true });
 await mkdir(join(dist, "server"), { recursive: true });
 
-for (const entry of ["index.html", "interactive-nn.html", "assets", "playbook"]) {
+for (const entry of ["index.html", "assets", "playbook"]) {
   await cp(join(root, entry), join(dist, entry), { recursive: true });
 }
 

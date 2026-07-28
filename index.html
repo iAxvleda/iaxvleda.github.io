@@ -15,8 +15,8 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://iaxvleda.github.io/assets/images/og-quality-engineering.png">
   <link rel="canonical" href="https://iaxvleda.github.io/">
-  <link rel="stylesheet" href="/assets/css/portfolio.css?v=20260728-3">
-  <script src="/assets/js/site.js?v=20260728-3" defer></script>
+  <link rel="stylesheet" href="/assets/css/portfolio.css?v=20260728-4">
+  <script src="/assets/js/site.js?v=20260728-4" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -46,6 +46,7 @@
 
   <main id="main">
     <section class="hero" id="top">
+      <canvas class="motion-field" data-motion-field aria-hidden="true"></canvas>
       <div class="shell hero-grid">
         <div class="hero-copy">
           <p class="eyebrow"><span></span> Independent quality engineering</p>
@@ -176,32 +177,51 @@
       <div class="shell">
         <div class="section-heading work-heading">
           <div>
-            <p class="section-kicker">02 / Selected work</p>
-            <h2>Proof over<br>promises.</h2>
+            <p class="section-kicker">02 / Quality in motion</p>
+            <h2>Systems that<br>keep moving.</h2>
           </div>
-          <p>Hands-on experiments and practical QA notes. No anonymous client claims — just work you can open and inspect.</p>
+          <p>Quality should move with the product: finding risk early, turning it into focused checks, and keeping the release signal visible.</p>
         </div>
 
         <article class="featured-project">
-          <a class="project-visual" href="/interactive-nn.html" aria-label="Open the interactive neural network playground">
-            <div class="network-preview" aria-hidden="true">
-              <div class="node-column column-a"><i></i><i></i><i></i><i></i><i></i></div>
-              <div class="node-column column-b"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-              <div class="node-column column-c"><i></i><i></i><i></i><i></i></div>
-              <span class="network-line line-a"></span>
-              <span class="network-line line-b"></span>
-              <span class="network-line line-c"></span>
-              <span class="network-glow"></span>
+          <div class="flow-visual" aria-hidden="true">
+            <span class="flow-scan"></span>
+            <div class="flow-topline">
+              <span>quality-loop.yml</span>
+              <span class="live-pill"><i></i> active</span>
             </div>
-            <span class="open-project" aria-hidden="true">↗</span>
-          </a>
+            <div class="flow-stages">
+              <div class="flow-stage">
+                <span>01</span>
+                <b>Discover</b>
+                <small>Map product risk</small>
+                <i></i>
+              </div>
+              <div class="flow-stage">
+                <span>02</span>
+                <b>Automate</b>
+                <small>Build useful checks</small>
+                <i></i>
+              </div>
+              <div class="flow-stage">
+                <span>03</span>
+                <b>Signal</b>
+                <small>Make risk visible</small>
+                <i></i>
+              </div>
+            </div>
+            <div class="flow-rail"><span></span></div>
+            <div class="flow-output">
+              <div><small>Release signal</small><strong>Clear and actionable</strong></div>
+              <span class="output-status"><i></i> Ready</span>
+            </div>
+          </div>
           <div class="project-copy">
-            <p class="project-type">Interactive experiment · Canvas · JavaScript</p>
-            <h3>Neural Network Playground</h3>
-            <p>An interactive visual model for exploring activations, layer density, weights, and motion in real time. Built as a standalone, dependency-free canvas experience.</p>
+            <p class="project-type">Risk · Automation · Delivery</p>
+            <h3>A continuous quality loop.</h3>
+            <p>My work connects exploratory testing, maintainable automation, and delivery feedback into one system. The goal is not more test output — it is a faster, clearer decision at every stage of development.</p>
             <div class="project-links">
-              <a class="text-link" href="/interactive-nn.html">Launch experiment <span>↗</span></a>
-              <a class="text-link muted-link" href="https://github.com/iAxvleda/iaxvleda.github.io/blob/main/interactive-nn.html">View source <span>↗</span></a>
+              <a class="text-link" href="/playbook/">Open the QA playbook <span>↗</span></a>
             </div>
           </div>
         </article>
